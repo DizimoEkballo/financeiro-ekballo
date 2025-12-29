@@ -36,6 +36,33 @@
 
   <!-- USUÁRIO LOGADO -->
   <section id="user-section" style="display:none;">
+    <section id="finance-section" style="display:none; margin-top: 20px;">
+  <h2>Novo Lançamento Financeiro</h2>
+
+  <label>Tipo</label><br />
+  <select id="tipo">
+    <option value="entrada">Entrada</option>
+    <option value="saida">Saída</option>
+  </select><br /><br />
+
+  <label>Categoria</label><br />
+  <select id="categoria">
+    <option value="">Carregando categorias...</option>
+  </select><br /><br />
+
+  <label>Valor (R$)</label><br />
+  <input type="number" id="valor" step="0.01" /><br /><br />
+
+  <label>Data</label><br />
+  <input type="date" id="data" /><br /><br />
+
+  <label>Descrição</label><br />
+  <input type="text" id="descricao" /><br /><br />
+
+  <button id="btnSalvar">Salvar Lançamento</button>
+
+  <p id="msgFinanceiro"></p>
+</section>
     <p>
       Usuário logado: <strong id="userEmail"></strong><br />
       Perfil: <strong id="userPerfil"></strong>
@@ -44,4 +71,5 @@
     <button id="btnLogout">Sair</button>
   </section>
 </main>
+
 
