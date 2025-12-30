@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
       carregarCategorias(selectTipo.value);
     });
 
+    // carregamento inicial
     carregarCategorias(selectTipo.value);
   }
 
@@ -104,6 +105,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const tipo = selectTipo.value;
       const categoriaId = selectCategoria.value;
+      const categoriaNome =
+        selectCategoria.options[selectCategoria.selectedIndex]?.text;
+
       const valor = parseFloat(inputValor.value);
       const data = inputData.value;
       const descricao = inputDescricao.value;
@@ -124,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
         await addDoc(collection(db, "lancamentos"), {
           tipo,
           categoriaId,
+          categoriaNome,
           valor,
           data,
           descricao,
@@ -133,15 +138,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         msgFinanceiro.style.color = "green";
-        msgFinanceiro.textContent = "Lançamento salvo com sucesso ✔️";
+        msgFinanceiro.textContent = "Lançamento salvo com sucesso ✅";
 
+        // limpar formulário
         inputValor.value = "";
         inputData.value = "";
         inputDescricao.value = "";
 
       } catch (error) {
         console.error("Erro ao salvar lançamento:", error);
-        msgFinanceiro.textContent = "Erro ao salvar lançamento.";
+        msgFinanceiro.textContent = "Erro ao salvar lançamento ❌";
       }
     });
   }
@@ -205,7 +211,5 @@ document.addEventListener("DOMContentLoaded", () => {
       userSection.style.display = "none";
       if (financeSection) financeSection.style.display = "none";
     }
-
   });
-
 });
