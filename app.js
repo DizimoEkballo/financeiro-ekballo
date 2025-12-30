@@ -1,11 +1,5 @@
-import {
-  collection,
-  getDocs,
-  query,
-  where
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
 import { auth, db } from "./firebase.js";
+
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -37,11 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const userEmailEl = document.getElementById("userEmail");
   const userPerfilEl = document.getElementById("userPerfil");
   const loginErrorEl = document.getElementById("loginError");
-  
-    const selectCategoria = document.getElementById("categoria");
+
+  const selectCategoria = document.getElementById("categoria");
   const selectTipo = document.getElementById("tipo");
 
-    async function carregarCategorias(tipoSelecionado) {
+  // FUNÇÃO: CARREGAR CATEGORIAS
+  async function carregarCategorias(tipoSelecionado) {
     if (!selectCategoria) return;
 
     selectCategoria.innerHTML = "<option>Carregando categorias...</option>";
@@ -51,19 +46,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
       selectCategoria.innerHTML = "";
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
 
         if (data.tipo === tipoSelecionado) {
           const option = document.createElement("option");
-          option.value = doc.id;
+          option.value = docSnap.id;
           option.textContent = data.nome;
           selectCategoria.appendChild(option);
         }
       });
 
       if (selectCategoria.children.length === 0) {
-        selectCategoria.innerHTML = "<option>Nenhuma categoria encontrada</option>";
+        selectCategoria.innerHTML =
+          "<option>Nenhuma categoria encontrada</option>";
       }
 
     } catch (error) {
@@ -72,6 +68,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // EVENTO: MUDANÇA DE TIPO
+  if (selectTipo) {
+    selectTipo.addEventListener("change", () => {
+      carregarCategorias(selectTipo.value);
+    });
+
+    // CARREGAR INICIAL (entrada)
+    carregarCategorias(selectTipo.value);
+  }
 
   // STATUS FIREBASE
   if (statusEl) {
@@ -84,10 +89,11 @@ document.addEventListener("DOMContentLoaded", () => {
     loginErrorEl.textContent = "";
 
     try {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(
+        auth,
+        emailInput.value,
+        passwordInput.value
+      );
     } catch (error) {
       loginErrorEl.textContent = "Erro ao fazer login";
       console.error(error);
@@ -103,41 +109,29 @@ document.addEventListener("DOMContentLoaded", () => {
   onAuthStateChanged(auth, async (user) => {
 
     if (user) {
-      // USUÁRIO LOGADO
       loginSection.style.display = "none";
       userSection.style.display = "block";
-
-      if (financeSection) {
-        financeSection.style.display = "block";
-      }
+      if (financeSection) financeSection.style.display = "block";
 
       userEmailEl.textContent = user.email;
 
-      // BUSCAR PERFIL NO FIRESTORE
       const userRef = doc(db, "usuarios", user.uid);
       const userSnap = await getDoc(userRef);
 
       if (userSnap.exists()) {
-        const dados = userSnap.data();
-        userPerfilEl.textContent = dados.perfil;
+        userPerfilEl.textContent = userSnap.data().perfil;
       } else {
         userPerfilEl.textContent = "perfil não encontrado";
       }
 
     } else {
-      // VISITANTE
       loginSection.style.display = "block";
       userSection.style.display = "none";
-
-      if (financeSection) {
-        financeSection.style.display = "none";
-      }
+      if (financeSection) financeSection.style.display = "none";
     }
 
   });
 
 });
-
-
 
 
