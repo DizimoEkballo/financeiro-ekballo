@@ -14,7 +14,9 @@ import {
 
 import {
   doc,
-  getDoc
+  getDoc,
+  collection,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -135,6 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
 
 
 
