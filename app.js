@@ -12,7 +12,9 @@ import {
   collection,
   getDocs,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  query,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -46,6 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputDescricao = document.getElementById("descricao");
   const btnSalvar = document.getElementById("btnSalvar");
   const msgFinanceiro = document.getElementById("msgFinanceiro");
+
+  const listaLancamentos = document.getElementById("listaLancamentos");
 
   // ===============================
   // FUNÇÃO: CARREGAR CATEGORIAS
@@ -82,6 +86,52 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
+  // FUNÇÃO: LISTAR LANÇAMENTOS
+  // ===============================
+  async function listarLancamentos() {
+    if (!listaLancamentos) return;
+
+    listaLancamentos.innerHTML =
+      "<tr><td colspan='5'>Carregando...</td></tr>";
+
+    try {
+      const q = query(
+        collection(db, "lancamentos"),
+        orderBy("data", "desc")
+      );
+
+      const snapshot = await getDocs(q);
+      listaLancamentos.innerHTML = "";
+
+      if (snapshot.empty) {
+        listaLancamentos.innerHTML =
+          "<tr><td colspan='5'>Nenhum lançamento encontrado</td></tr>";
+        return;
+      }
+
+      snapshot.forEach((docSnap) => {
+        const l = docSnap.data();
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${l.data}</td>
+          <td>${l.tipo}</td>
+          <td>${l.categoriaNome || "-"}</td>
+          <td>R$ ${Number(l.valor).toFixed(2)}</td>
+          <td>${l.descricao || ""}</td>
+        `;
+
+        listaLancamentos.appendChild(tr);
+      });
+
+    } catch (error) {
+      console.error("Erro ao listar lançamentos:", error);
+      listaLancamentos.innerHTML =
+        "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
+    }
+  }
+
+  // ===============================
   // EVENTO: MUDANÇA DE TIPO
   // ===============================
   if (selectTipo) {
@@ -89,16 +139,14 @@ document.addEventListener("DOMContentLoaded", () => {
       carregarCategorias(selectTipo.value);
     });
 
-    // carregamento inicial
     carregarCategorias(selectTipo.value);
   }
 
   // ===============================
-  // ETAPA 4.3 — SALVAR LANÇAMENTO
+  // SALVAR LANÇAMENTO
   // ===============================
   if (btnSalvar) {
-    btnSalvar.addEventListener("click", async (e) => {
-      e.preventDefault();
+    btnSalvar.addEventListener("click", async () => {
 
       msgFinanceiro.textContent = "";
       msgFinanceiro.style.color = "red";
@@ -140,10 +188,11 @@ document.addEventListener("DOMContentLoaded", () => {
         msgFinanceiro.style.color = "green";
         msgFinanceiro.textContent = "Lançamento salvo com sucesso ✅";
 
-        // limpar formulário
         inputValor.value = "";
         inputData.value = "";
         inputDescricao.value = "";
+
+        listarLancamentos();
 
       } catch (error) {
         console.error("Erro ao salvar lançamento:", error);
@@ -161,11 +210,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // LOGIN
+  // LOGIN / LOGOUT
   // ===============================
   btnLogin.addEventListener("click", async () => {
     loginErrorEl.textContent = "";
-
     try {
       await signInWithEmailAndPassword(
         auth,
@@ -178,9 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ===============================
-  // LOGOUT
-  // ===============================
   btnLogout.addEventListener("click", async () => {
     await signOut(auth);
   });
@@ -200,11 +245,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const userRef = doc(db, "usuarios", user.uid);
       const userSnap = await getDoc(userRef);
 
-      if (userSnap.exists()) {
-        userPerfilEl.textContent = userSnap.data().perfil;
-      } else {
-        userPerfilEl.textContent = "perfil não encontrado";
-      }
+      userPerfilEl.textContent =
+        userSnap.exists() ? userSnap.data().perfil : "perfil não encontrado";
+
+      listarLancamentos();
 
     } else {
       loginSection.style.display = "block";
@@ -212,4 +256,5 @@ document.addEventListener("DOMContentLoaded", () => {
       if (financeSection) financeSection.style.display = "none";
     }
   });
+
 });
