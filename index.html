@@ -57,8 +57,31 @@
         <label>Descrição</label><br />
         <input type="text" id="descricao" /><br /><br />
 
-       <button id="btnSalvar" type="button">Salvar Lançamento</button>
+        <button id="btnSalvar" type="button">Salvar Lançamento</button>
         <p id="msgFinanceiro"></p>
+
+        <!-- ===============================
+             ETAPA 5.1 — LISTA DE LANÇAMENTOS
+        ================================ -->
+        <h3>Lista de Lançamentos</h3>
+
+        <table border="1" width="100%">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Categoria</th>
+              <th>Valor (R$)</th>
+              <th>Descrição</th>
+            </tr>
+          </thead>
+          <tbody id="listaLancamentos">
+            <tr>
+              <td colspan="5">Carregando...</td>
+            </tr>
+          </tbody>
+        </table>
+
       </section>
 
       <p>
@@ -70,8 +93,9 @@
     </section>
   </main>
 
-  <!-- JS (APENAS O APP.JS) -->
+  <!-- JS -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>
+
 
