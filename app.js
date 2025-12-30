@@ -30,8 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginErrorEl = document.getElementById("loginError");
 
   // STATUS FIREBASE
-  statusEl.textContent = "Conectado ao Firebase ✅";
-  statusEl.style.color = "green";
+  if (statusEl) {
+    statusEl.textContent = "Conectado ao Firebase ✅";
+    statusEl.style.color = "green";
+  }
 
   // LOGIN
   btnLogin.addEventListener("click", async () => {
@@ -60,7 +62,10 @@ document.addEventListener("DOMContentLoaded", () => {
       // USUÁRIO LOGADO
       loginSection.style.display = "none";
       userSection.style.display = "block";
-      financeSection.style.display = "block";
+
+      if (financeSection) {
+        financeSection.style.display = "block";
+      }
 
       userEmailEl.textContent = user.email;
 
@@ -72,7 +77,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const dados = userSnap.data();
         userPerfilEl.textContent = dados.perfil;
       } else {
-        userPerfilEl.textContent
+        userPerfilEl.textContent = "perfil não encontrado";
+      }
 
+    } else {
+      // VISITANTE
+      loginSection.style.display = "block";
+      userSection.style.display = "none";
 
+      if (financeSection) {
+        financeSection.style.display = "none";
+      }
+    }
 
+  });
+
+});
