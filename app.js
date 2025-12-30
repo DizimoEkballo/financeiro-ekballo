@@ -87,8 +87,34 @@ document.addEventListener("DOMContentLoaded", () => {
       carregarCategorias(selectTipo.value);
     });
 
-    // carregar inicialmente
     carregarCategorias(selectTipo.value);
+  }
+
+  // ===============================
+  // ETAPA 4.2 — VALIDAR LANÇAMENTO
+  // ===============================
+  if (btnSalvar) {
+    btnSalvar.addEventListener("click", () => {
+      msgFinanceiro.textContent = "";
+      msgFinanceiro.style.color = "red";
+
+      const tipo = selectTipo.value;
+      const categoria = selectCategoria.value;
+      const valor = parseFloat(inputValor.value);
+      const data = inputData.value;
+      const descricao = inputDescricao.value;
+
+      if (!tipo || !categoria || !data || isNaN(valor) || valor <= 0) {
+        msgFinanceiro.textContent =
+          "Preencha todos os campos obrigatórios corretamente.";
+        return;
+      }
+
+      // Validação OK (ainda não salva)
+      msgFinanceiro.style.color = "green";
+      msgFinanceiro.textContent =
+        "Dados válidos ✔️ Pronto para salvar no sistema.";
+    });
   }
 
   // ===============================
@@ -154,5 +180,3 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
-
-
