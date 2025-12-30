@@ -10,7 +10,9 @@ import {
   doc,
   getDoc,
   collection,
-  getDocs
+  getDocs,
+  addDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -35,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginErrorEl = document.getElementById("loginError");
 
   // ===============================
-  // ELEMENTOS FINANCEIROS (ETAPA 4.1)
+  // ELEMENTOS FINANCEIROS
   // ===============================
   const selectTipo = document.getElementById("tipo");
   const selectCategoria = document.getElementById("categoria");
@@ -91,30 +93,56 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // ETAPA 4.2 — VALIDAR LANÇAMENTO
+  // ETAPA 4.3 — SALVAR LANÇAMENTO
   // ===============================
   if (btnSalvar) {
-  btnSalvar.addEventListener("click", (e) => {
-    e.preventDefault();
+    btnSalvar.addEventListener("click", async (e) => {
+      e.preventDefault();
+
       msgFinanceiro.textContent = "";
       msgFinanceiro.style.color = "red";
 
       const tipo = selectTipo.value;
-      const categoria = selectCategoria.value;
+      const categoriaId = selectCategoria.value;
       const valor = parseFloat(inputValor.value);
       const data = inputData.value;
       const descricao = inputDescricao.value;
 
-      if (!tipo || !categoria || !data || isNaN(valor) || valor <= 0) {
+      if (!tipo || !categoriaId || !data || isNaN(valor) || valor <= 0) {
         msgFinanceiro.textContent =
           "Preencha todos os campos obrigatórios corretamente.";
         return;
       }
 
-      // Validação OK (ainda não salva)
-      msgFinanceiro.style.color = "green";
-      msgFinanceiro.textContent =
-        "Dados válidos ✔️ Pronto para salvar no sistema.";
+      const user = auth.currentUser;
+      if (!user) {
+        msgFinanceiro.textContent = "Usuário não autenticado.";
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "lancamentos"), {
+          tipo,
+          categoriaId,
+          valor,
+          data,
+          descricao,
+          usuarioId: user.uid,
+          usuarioEmail: user.email,
+          criadoEm: serverTimestamp()
+        });
+
+        msgFinanceiro.style.color = "green";
+        msgFinanceiro.textContent = "Lançamento salvo com sucesso ✔️";
+
+        inputValor.value = "";
+        inputData.value = "";
+        inputDescricao.value = "";
+
+      } catch (error) {
+        console.error("Erro ao salvar lançamento:", error);
+        msgFinanceiro.textContent = "Erro ao salvar lançamento.";
+      }
     });
   }
 
@@ -181,4 +209,3 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
-
