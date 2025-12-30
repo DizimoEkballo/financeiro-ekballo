@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const loginSection = document.getElementById("login-section");
   const userSection = document.getElementById("user-section");
+  const financeSection = document.getElementById("finance-section");
 
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
@@ -56,9 +57,10 @@ document.addEventListener("DOMContentLoaded", () => {
   onAuthStateChanged(auth, async (user) => {
 
     if (user) {
-      // LOGADO
+      // USUÁRIO LOGADO
       loginSection.style.display = "none";
       userSection.style.display = "block";
+      financeSection.style.display = "block";
 
       userEmailEl.textContent = user.email;
 
@@ -70,15 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const dados = userSnap.data();
         userPerfilEl.textContent = dados.perfil;
       } else {
-        userPerfilEl.textContent = "perfil não encontrado";
-      }
+        userPerfilEl.textContent
 
-    } else {
-      // VISITANTE
-      loginSection.style.display = "block";
-      userSection.style.display = "none";
-    }
 
-  });
 
-});
