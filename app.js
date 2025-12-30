@@ -39,6 +39,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectCategoria = document.getElementById("categoria");
   const selectTipo = document.getElementById("tipo");
 
+    async function carregarCategorias(tipoSelecionado) {
+    if (!selectCategoria) return;
+
+    selectCategoria.innerHTML = "<option>Carregando categorias...</option>";
+
+    try {
+      const snapshot = await getDocs(collection(db, "categorias"));
+
+      selectCategoria.innerHTML = "";
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+
+        if (data.tipo === tipoSelecionado) {
+          const option = document.createElement("option");
+          option.value = doc.id;
+          option.textContent = data.nome;
+          selectCategoria.appendChild(option);
+        }
+      });
+
+      if (selectCategoria.children.length === 0) {
+        selectCategoria.innerHTML = "<option>Nenhuma categoria encontrada</option>";
+      }
+
+    } catch (error) {
+      console.error("Erro ao carregar categorias:", error);
+      selectCategoria.innerHTML = "<option>Erro ao carregar</option>";
+    }
+  }
+
+
   // STATUS FIREBASE
   if (statusEl) {
     statusEl.textContent = "Conectado ao Firebase ✅";
@@ -103,5 +135,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
 
 
