@@ -35,6 +35,39 @@
 
       <!-- FORMULÁRIO FINANCEIRO -->
       <section id="finance-section" style="display:none; margin-top: 20px;">
+
+        <!-- ===============================
+             ETAPA 6.1 — DASHBOARD DE KPIs
+        ================================ -->
+        <h2>Resumo Financeiro</h2>
+
+        <div id="kpis" style="display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
+
+          <div class="kpi">
+            <h4>Total de Entradas</h4>
+            <p id="kpiEntradas">R$ 0,00</p>
+          </div>
+
+          <div class="kpi">
+            <h4>Total de Saídas</h4>
+            <p id="kpiSaidas">R$ 0,00</p>
+          </div>
+
+          <div class="kpi">
+            <h4>Saldo Geral</h4>
+            <p id="kpiSaldo">R$ 0,00</p>
+          </div>
+
+          <div class="kpi">
+            <h4>% de Gastos</h4>
+            <p id="kpiPercentual">0%</p>
+          </div>
+
+        </div>
+
+        <!-- ===============================
+             FORMULÁRIO DE LANÇAMENTO
+        ================================ -->
         <h2>Novo Lançamento Financeiro</h2>
 
         <label>Tipo</label><br />
@@ -95,7 +128,4 @@
 
   <!-- JS -->
   <script type="module" src="./app.js"></script>
-</body>
-</html>
-
-
+</body
