@@ -15,7 +15,9 @@ import {
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ELEMENTOS
+  // ===============================
+  // ELEMENTOS GERAIS
+  // ===============================
   const statusEl = document.getElementById("status");
 
   const loginSection = document.getElementById("login-section");
@@ -32,10 +34,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const userPerfilEl = document.getElementById("userPerfil");
   const loginErrorEl = document.getElementById("loginError");
 
-  const selectCategoria = document.getElementById("categoria");
+  // ===============================
+  // ELEMENTOS FINANCEIROS (ETAPA 4.1)
+  // ===============================
   const selectTipo = document.getElementById("tipo");
+  const selectCategoria = document.getElementById("categoria");
+  const inputValor = document.getElementById("valor");
+  const inputData = document.getElementById("data");
+  const inputDescricao = document.getElementById("descricao");
+  const btnSalvar = document.getElementById("btnSalvar");
+  const msgFinanceiro = document.getElementById("msgFinanceiro");
 
+  // ===============================
   // FUNÇÃO: CARREGAR CATEGORIAS
+  // ===============================
   async function carregarCategorias(tipoSelecionado) {
     if (!selectCategoria) return;
 
@@ -43,7 +55,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const snapshot = await getDocs(collection(db, "categorias"));
-
       selectCategoria.innerHTML = "";
 
       snapshot.forEach((docSnap) => {
@@ -68,23 +79,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ===============================
   // EVENTO: MUDANÇA DE TIPO
+  // ===============================
   if (selectTipo) {
     selectTipo.addEventListener("change", () => {
       carregarCategorias(selectTipo.value);
     });
 
-    // CARREGAR INICIAL (entrada)
+    // carregar inicialmente
     carregarCategorias(selectTipo.value);
   }
 
+  // ===============================
   // STATUS FIREBASE
+  // ===============================
   if (statusEl) {
     statusEl.textContent = "Conectado ao Firebase ✅";
     statusEl.style.color = "green";
   }
 
+  // ===============================
   // LOGIN
+  // ===============================
   btnLogin.addEventListener("click", async () => {
     loginErrorEl.textContent = "";
 
@@ -100,12 +117,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // ===============================
   // LOGOUT
+  // ===============================
   btnLogout.addEventListener("click", async () => {
     await signOut(auth);
   });
 
+  // ===============================
   // CONTROLE DE ESTADO
+  // ===============================
   onAuthStateChanged(auth, async (user) => {
 
     if (user) {
