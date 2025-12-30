@@ -35,6 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const userEmailEl = document.getElementById("userEmail");
   const userPerfilEl = document.getElementById("userPerfil");
   const loginErrorEl = document.getElementById("loginError");
+  
+    const selectCategoria = document.getElementById("categoria");
+  const selectTipo = document.getElementById("tipo");
 
   // STATUS FIREBASE
   if (statusEl) {
@@ -100,4 +103,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
 
