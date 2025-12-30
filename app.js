@@ -1,3 +1,10 @@
+import {
+  collection,
+  getDocs,
+  query,
+  where
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 import { auth, db } from "./firebase.js";
 import {
   signInWithEmailAndPassword,
@@ -93,3 +100,4 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
