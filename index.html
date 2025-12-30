@@ -7,10 +7,6 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Firebase (ES Modules - GitHub Pages friendly) -->
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="app.js"></script>
 </head>
 
 <body>
@@ -19,57 +15,62 @@
     <p>Status do sistema: <span id="status">Carregando...</span></p>
   </header>
 
- <main>
-  <!-- VISITANTE -->
-  <section id="login-section">
-    <h2>Login</h2>
+  <main>
+    <!-- VISITANTE -->
+    <section id="login-section">
+      <h2>Login</h2>
 
-    <input type="email" id="email" placeholder="E-mail" />
-    <br /><br />
-    <input type="password" id="password" placeholder="Senha" />
-    <br /><br />
+      <input type="email" id="email" placeholder="E-mail" />
+      <br /><br />
+      <input type="password" id="password" placeholder="Senha" />
+      <br /><br />
 
-    <button id="btnLogin">Entrar</button>
+      <button id="btnLogin">Entrar</button>
 
-    <p id="loginError" style="color:red;"></p>
-  </section>
+      <p id="loginError" style="color:red;"></p>
+    </section>
 
-  <!-- USUÁRIO LOGADO -->
-  <section id="user-section" style="display:none;">
-    <section id="finance-section" style="display:none; margin-top: 20px;">
-  <h2>Novo Lançamento Financeiro</h2>
+    <!-- USUÁRIO LOGADO -->
+    <section id="user-section" style="display:none;">
 
-  <label>Tipo</label><br />
-  <select id="tipo">
-    <option value="entrada">Entrada</option>
-    <option value="saida">Saída</option>
-  </select><br /><br />
+      <!-- FORMULÁRIO FINANCEIRO -->
+      <section id="finance-section" style="display:none; margin-top: 20px;">
+        <h2>Novo Lançamento Financeiro</h2>
 
-  <label>Categoria</label><br />
-  <select id="categoria">
-    <option value="">Carregando categorias...</option>
-  </select><br /><br />
+        <label>Tipo</label><br />
+        <select id="tipo">
+          <option value="entrada">Entrada</option>
+          <option value="saida">Saída</option>
+        </select><br /><br />
 
-  <label>Valor (R$)</label><br />
-  <input type="number" id="valor" step="0.01" /><br /><br />
+        <label>Categoria</label><br />
+        <select id="categoria">
+          <option value="">Carregando categorias...</option>
+        </select><br /><br />
 
-  <label>Data</label><br />
-  <input type="date" id="data" /><br /><br />
+        <label>Valor (R$)</label><br />
+        <input type="number" id="valor" step="0.01" /><br /><br />
 
-  <label>Descrição</label><br />
-  <input type="text" id="descricao" /><br /><br />
+        <label>Data</label><br />
+        <input type="date" id="data" /><br /><br />
 
-  <button id="btnSalvar">Salvar Lançamento</button>
+        <label>Descrição</label><br />
+        <input type="text" id="descricao" /><br /><br />
 
-  <p id="msgFinanceiro"></p>
-</section>
-    <p>
-      Usuário logado: <strong id="userEmail"></strong><br />
-      Perfil: <strong id="userPerfil"></strong>
-    </p>
+        <button id="btnSalvar">Salvar Lançamento</button>
+        <p id="msgFinanceiro"></p>
+      </section>
 
-    <button id="btnLogout">Sair</button>
-  </section>
-</main>
+      <p>
+        Usuário logado: <strong id="userEmail"></strong><br />
+        Perfil: <strong id="userPerfil"></strong>
+      </p>
 
+      <button id="btnLogout">Sair</button>
+    </section>
+  </main>
 
+  <!-- JS (APENAS O APP.JS) -->
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
