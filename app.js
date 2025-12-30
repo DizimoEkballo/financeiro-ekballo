@@ -94,7 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // ETAPA 4.2 — VALIDAR LANÇAMENTO
   // ===============================
   if (btnSalvar) {
-    btnSalvar.addEventListener("click", () => {
+  btnSalvar.addEventListener("click", (e) => {
+    e.preventDefault();
       msgFinanceiro.textContent = "";
       msgFinanceiro.style.color = "red";
 
@@ -180,3 +181,4 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
