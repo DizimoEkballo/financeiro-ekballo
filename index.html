@@ -32,11 +32,11 @@
     <!-- USUÁRIO LOGADO -->
     <section id="user-section" style="display:none;">
 
-      <!-- FORMULÁRIO FINANCEIRO -->
+      <!-- ÁREA FINANCEIRA -->
       <section id="finance-section" style="display:none; margin-top: 20px;">
 
         <!-- ===============================
-             ETAPA 6.1 — DASHBOARD DE KPIs
+             ETAPA 6.1 — KPIs
         ================================ -->
         <h2>Resumo Financeiro</h2>
 
@@ -65,13 +65,16 @@
         </div>
 
         <!-- ===============================
-             ETAPA 6.3 — GRÁFICO
+             ETAPA 6.4 — GRÁFICOS
         ================================ -->
-        <h3>Entradas x Saídas</h3>
-        <canvas id="graficoFinanceiro" height="120"></canvas>
+        <h2>Gráficos Financeiros</h2>
+
+        <canvas id="graficoEntradasSaidas" height="120"></canvas>
+        <br /><br />
+        <canvas id="graficoSaldo" height="120"></canvas>
 
         <!-- ===============================
-             FORMULÁRIO DE LANÇAMENTO
+             FORMULÁRIO
         ================================ -->
         <h2>Novo Lançamento Financeiro</h2>
 
@@ -99,7 +102,7 @@
         <p id="msgFinanceiro"></p>
 
         <!-- ===============================
-             LISTA DE LANÇAMENTOS
+             LISTA
         ================================ -->
         <h3>Lista de Lançamentos</h3>
 
@@ -131,10 +134,10 @@
     </section>
   </main>
 
-  <!-- CHART.JS -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- APP -->
+  <!-- App -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>
