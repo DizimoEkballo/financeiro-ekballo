@@ -78,50 +78,43 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // LISTAR LANÇAMENTOS (CORRIGIDO)
+  // LISTAR LANÇAMENTOS
   // ===============================
   async function listarLancamentos(userId) {
     listaLancamentos.innerHTML =
       "<tr><td colspan='5'>Carregando...</td></tr>";
 
-    try {
-      const q = query(
-        collection(db, "lancamentos"),
-        where("usuarioId", "==", userId)
-      );
+    const q = query(
+      collection(db, "lancamentos"),
+      where("usuarioId", "==", userId)
+    );
 
-      const snapshot = await getDocs(q);
-      listaLancamentos.innerHTML = "";
+    const snapshot = await getDocs(q);
+    listaLancamentos.innerHTML = "";
 
-      if (snapshot.empty) {
-        listaLancamentos.innerHTML =
-          "<tr><td colspan='5'>Nenhum lançamento encontrado</td></tr>";
-        return;
-      }
-
-      snapshot.forEach((docSnap) => {
-        const l = docSnap.data();
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${l.data}</td>
-          <td>${l.tipo}</td>
-          <td>${l.categoriaNome || "-"}</td>
-          <td>R$ ${Number(l.valor).toFixed(2)}</td>
-          <td>${l.descricao || ""}</td>
-        `;
-        listaLancamentos.appendChild(tr);
-      });
-
-    } catch (error) {
-      console.error("Erro ao listar lançamentos:", error);
+    if (snapshot.empty) {
       listaLancamentos.innerHTML =
-        "<tr><td colspan='5'>Erro ao carregar lançamentos</td></tr>";
+        "<tr><td colspan='5'>Nenhum lançamento encontrado</td></tr>";
+      return;
     }
+
+    snapshot.forEach((docSnap) => {
+      const l = docSnap.data();
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${l.data}</td>
+        <td>${l.tipo}</td>
+        <td>${l.categoriaNome || "-"}</td>
+        <td>R$ ${Number(l.valor).toFixed(2)}</td>
+        <td>${l.descricao || ""}</td>
+      `;
+      listaLancamentos.appendChild(tr);
+    });
   }
 
   // ===============================
-  // KPIs
+  // CALCULAR KPIs
   // ===============================
   async function calcularKPIs(userId) {
     let entradas = 0;
@@ -147,6 +140,46 @@ document.addEventListener("DOMContentLoaded", () => {
     kpiSaidas.textContent = `R$ ${saidas.toFixed(2)}`;
     kpiSaldo.textContent = `R$ ${saldo.toFixed(2)}`;
     kpiPercentual.textContent = `${percentual.toFixed(1)}%`;
+  }
+
+  // ===============================
+  // 🔥 ETAPA 6.4 — GRÁFICOS
+  // ===============================
+  let graficoFinanceiro;
+
+  async function carregarGrafico(userId) {
+    let entradas = 0;
+    let saidas = 0;
+
+    const q = query(
+      collection(db, "lancamentos"),
+      where("usuarioId", "==", userId)
+    );
+
+    const snapshot = await getDocs(q);
+
+    snapshot.forEach((docSnap) => {
+      const l = docSnap.data();
+      if (l.tipo === "entrada") entradas += l.valor;
+      if (l.tipo === "saida") saidas += l.valor;
+    });
+
+    const ctx = document.getElementById("graficoFinanceiro");
+
+    if (graficoFinanceiro) {
+      graficoFinanceiro.destroy();
+    }
+
+    graficoFinanceiro = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["Entradas", "Saídas"],
+        datasets: [{
+          label: "Valores (R$)",
+          data: [entradas, saidas]
+        }]
+      }
+    });
   }
 
   // ===============================
@@ -178,6 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     listarLancamentos(user.uid);
     calcularKPIs(user.uid);
+    carregarGrafico(user.uid);
   });
 
   btnLogin.addEventListener("click", async () => {
@@ -207,6 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
       carregarCategorias(selectTipo.value);
       listarLancamentos(user.uid);
       calcularKPIs(user.uid);
+      carregarGrafico(user.uid);
 
     } else {
       loginSection.style.display = "block";
