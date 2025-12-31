@@ -61,10 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // CATEGORIAS
   // ===============================
   async function carregarCategorias(tipo) {
-    selectCategoria.innerHTML = "<option>Carregando...</option>";
+    selectCategoria.innerHTML = "<option value=''>Selecione</option>";
 
     const snapshot = await getDocs(collection(db, "categorias"));
-    selectCategoria.innerHTML = "";
 
     snapshot.forEach((docSnap) => {
       const c = docSnap.data();
@@ -142,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // 🔥 GRÁFICO (CORRIGIDO)
+  // 🔥 GRÁFICO (ESTÁVEL)
   // ===============================
   let graficoFinanceiro = null;
 
@@ -150,42 +149,45 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("graficoFinanceiro");
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    setTimeout(async () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    let entradas = 0;
-    let saidas = 0;
+      let entradas = 0;
+      let saidas = 0;
 
-    const q = query(
-      collection(db, "lancamentos"),
-      where("usuarioId", "==", userId)
-    );
+      const q = query(
+        collection(db, "lancamentos"),
+        where("usuarioId", "==", userId)
+      );
 
-    const snapshot = await getDocs(q);
+      const snapshot = await getDocs(q);
 
-    snapshot.forEach((docSnap) => {
-      const l = docSnap.data();
-      if (l.tipo === "entrada") entradas += l.valor;
-      if (l.tipo === "saida") saidas += l.valor;
-    });
+      snapshot.forEach((docSnap) => {
+        const l = docSnap.data();
+        if (l.tipo === "entrada") entradas += l.valor;
+        if (l.tipo === "saida") saidas += l.valor;
+      });
 
-    if (graficoFinanceiro) {
-      graficoFinanceiro.destroy();
-    }
-
-    graficoFinanceiro = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: ["Entradas", "Saídas"],
-        datasets: [{
-          label: "Valores (R$)",
-          data: [entradas, saidas]
-        }]
-      },
-      options: {
-        responsive: true
+      if (graficoFinanceiro) {
+        graficoFinanceiro.destroy();
       }
-    });
+
+      graficoFinanceiro = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Entradas", "Saídas"],
+          datasets: [{
+            label: "Valores (R$)",
+            data: [entradas, saidas]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }, 100);
   }
 
   // ===============================
@@ -196,20 +198,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   btnSalvar.addEventListener("click", async () => {
+    msgFinanceiro.style.color = "red";
+
     const user = auth.currentUser;
     if (!user) return;
 
+    const tipo = selectTipo.value;
+    const categoriaId = selectCategoria.value;
+    const categoriaNome =
+      selectCategoria.options[selectCategoria.selectedIndex]?.text || "";
+    const valor = parseFloat(inputValor.value);
+    const data = inputData.value;
+    const descricao = inputDescricao.value;
+
+    // ✅ VALIDAÇÃO REAL
+    if (!tipo || !categoriaId || !data || isNaN(valor) || valor <= 0) {
+      msgFinanceiro.textContent = "Preencha todos os campos corretamente.";
+      return;
+    }
+
     await addDoc(collection(db, "lancamentos"), {
-      tipo: selectTipo.value,
-      categoriaId: selectCategoria.value,
-      categoriaNome: selectCategoria.options[selectCategoria.selectedIndex].text,
-      valor: Number(inputValor.value),
-      data: inputData.value,
-      descricao: inputDescricao.value,
+      tipo,
+      categoriaId,
+      categoriaNome,
+      valor,
+      data,
+      descricao,
       usuarioId: user.uid,
       usuarioEmail: user.email,
       criadoEm: serverTimestamp()
     });
+
+    msgFinanceiro.style.color = "green";
+    msgFinanceiro.textContent = "Lançamento salvo com sucesso ✅";
 
     inputValor.value = "";
     inputData.value = "";
