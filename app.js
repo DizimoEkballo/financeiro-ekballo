@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const kpiPercentual = document.getElementById("kpiPercentual");
 
   // ===============================
-  // CARREGAR CATEGORIAS
+  // CATEGORIAS
   // ===============================
   async function carregarCategorias(tipo) {
     selectCategoria.innerHTML = "<option>Carregando...</option>";
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // LISTAR LANÇAMENTOS
+  // LISTA
   // ===============================
   async function listarLancamentos(userId) {
     listaLancamentos.innerHTML =
@@ -100,7 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     snapshot.forEach((docSnap) => {
       const l = docSnap.data();
-
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${l.data}</td>
@@ -114,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // CALCULAR KPIs
+  // KPIs
   // ===============================
   async function calcularKPIs(userId) {
     let entradas = 0;
@@ -143,11 +142,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // 🔥 ETAPA 6.4 — GRÁFICOS
+  // 🔥 GRÁFICO (CORRIGIDO)
   // ===============================
-  let graficoFinanceiro;
+  let graficoFinanceiro = null;
 
   async function carregarGrafico(userId) {
+    const canvas = document.getElementById("graficoFinanceiro");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     let entradas = 0;
     let saidas = 0;
 
@@ -164,8 +169,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (l.tipo === "saida") saidas += l.valor;
     });
 
-    const ctx = document.getElementById("graficoFinanceiro");
-
     if (graficoFinanceiro) {
       graficoFinanceiro.destroy();
     }
@@ -178,6 +181,9 @@ document.addEventListener("DOMContentLoaded", () => {
           label: "Valores (R$)",
           data: [entradas, saidas]
         }]
+      },
+      options: {
+        responsive: true
       }
     });
   }
@@ -223,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===============================
-  // AUTH STATE
+  // AUTH
   // ===============================
   onAuthStateChanged(auth, async (user) => {
     if (user) {
