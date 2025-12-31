@@ -26,7 +26,6 @@
       <br /><br />
 
       <button id="btnLogin">Entrar</button>
-
       <p id="loginError" style="color:red;"></p>
     </section>
 
@@ -66,6 +65,12 @@
         </div>
 
         <!-- ===============================
+             ETAPA 6.3 — GRÁFICO
+        ================================ -->
+        <h3>Entradas x Saídas</h3>
+        <canvas id="graficoFinanceiro" height="120"></canvas>
+
+        <!-- ===============================
              FORMULÁRIO DE LANÇAMENTO
         ================================ -->
         <h2>Novo Lançamento Financeiro</h2>
@@ -94,7 +99,7 @@
         <p id="msgFinanceiro"></p>
 
         <!-- ===============================
-             ETAPA 5.1 — LISTA DE LANÇAMENTOS
+             LISTA DE LANÇAMENTOS
         ================================ -->
         <h3>Lista de Lançamentos</h3>
 
@@ -126,6 +131,10 @@
     </section>
   </main>
 
-  <!-- JS -->
+  <!-- CHART.JS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- APP -->
   <script type="module" src="./app.js"></script>
-</body
+</body>
+</html>
