@@ -20,7 +20,7 @@ import {
 document.addEventListener("DOMContentLoaded", () => {
 
   // ===============================
-  // ELEMENTOS GERAIS
+  // ELEMENTOS
   // ===============================
   const statusEl = document.getElementById("status");
   const loginSection = document.getElementById("login-section");
@@ -36,9 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const userEmailEl = document.getElementById("userEmail");
   const userPerfilEl = document.getElementById("userPerfil");
 
-  // ===============================
-  // ELEMENTOS FINANCEIROS
-  // ===============================
   const selectTipo = document.getElementById("tipo");
   const selectCategoria = document.getElementById("categoria");
   const inputValor = document.getElementById("valor");
@@ -49,9 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const listaLancamentos = document.getElementById("listaLancamentos");
 
-  // ===============================
-  // KPIs
-  // ===============================
   const kpiEntradas = document.getElementById("kpiEntradas");
   const kpiSaidas = document.getElementById("kpiSaidas");
   const kpiSaldo = document.getElementById("kpiSaldo");
@@ -62,14 +56,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===============================
   async function carregarCategorias(tipo) {
     selectCategoria.innerHTML = "<option value=''>Selecione</option>";
-
-    const snapshot = await getDocs(collection(db, "categorias"));
-
-    snapshot.forEach((docSnap) => {
-      const c = docSnap.data();
+    const snap = await getDocs(collection(db, "categorias"));
+    snap.forEach(d => {
+      const c = d.data();
       if (c.tipo === tipo) {
         const opt = document.createElement("option");
-        opt.value = docSnap.id;
+        opt.value = d.id;
         opt.textContent = c.nome;
         selectCategoria.appendChild(opt);
       }
@@ -80,34 +72,32 @@ document.addEventListener("DOMContentLoaded", () => {
   // LISTA
   // ===============================
   async function listarLancamentos(userId) {
-    listaLancamentos.innerHTML =
-      "<tr><td colspan='5'>Carregando...</td></tr>";
+    listaLancamentos.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
     const q = query(
       collection(db, "lancamentos"),
       where("usuarioId", "==", userId)
     );
 
-    const snapshot = await getDocs(q);
+    const snap = await getDocs(q);
     listaLancamentos.innerHTML = "";
 
-    if (snapshot.empty) {
+    if (snap.empty) {
       listaLancamentos.innerHTML =
-        "<tr><td colspan='5'>Nenhum lançamento encontrado</td></tr>";
+        "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
       return;
     }
 
-    snapshot.forEach((docSnap) => {
-      const l = docSnap.data();
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${l.data}</td>
-        <td>${l.tipo}</td>
-        <td>${l.categoriaNome || "-"}</td>
-        <td>R$ ${Number(l.valor).toFixed(2)}</td>
-        <td>${l.descricao || ""}</td>
-      `;
-      listaLancamentos.appendChild(tr);
+    snap.forEach(d => {
+      const l = d.data();
+      listaLancamentos.innerHTML += `
+        <tr>
+          <td>${l.data}</td>
+          <td>${l.tipo}</td>
+          <td>${l.categoriaNome}</td>
+          <td>R$ ${l.valor.toFixed(2)}</td>
+          <td>${l.descricao || ""}</td>
+        </tr>`;
     });
   }
 
@@ -115,122 +105,105 @@ document.addEventListener("DOMContentLoaded", () => {
   // KPIs
   // ===============================
   async function calcularKPIs(userId) {
-    let entradas = 0;
-    let saidas = 0;
+    let entradas = 0, saidas = 0;
 
-    const q = query(
-      collection(db, "lancamentos"),
-      where("usuarioId", "==", userId)
-    );
+    const q = query(collection(db, "lancamentos"), where("usuarioId", "==", userId));
+    const snap = await getDocs(q);
 
-    const snapshot = await getDocs(q);
-
-    snapshot.forEach((docSnap) => {
-      const l = docSnap.data();
-      if (l.tipo === "entrada") entradas += l.valor;
-      if (l.tipo === "saida") saidas += l.valor;
+    snap.forEach(d => {
+      const l = d.data();
+      l.tipo === "entrada" ? entradas += l.valor : saidas += l.valor;
     });
-
-    const saldo = entradas - saidas;
-    const percentual = entradas > 0 ? (saidas / entradas) * 100 : 0;
 
     kpiEntradas.textContent = `R$ ${entradas.toFixed(2)}`;
     kpiSaidas.textContent = `R$ ${saidas.toFixed(2)}`;
-    kpiSaldo.textContent = `R$ ${saldo.toFixed(2)}`;
-    kpiPercentual.textContent = `${percentual.toFixed(1)}%`;
+    kpiSaldo.textContent = `R$ ${(entradas - saidas).toFixed(2)}`;
+    kpiPercentual.textContent =
+      entradas ? `${((saidas / entradas) * 100).toFixed(1)}%` : "0%";
   }
 
   // ===============================
-  // 🔥 GRÁFICO (ESTÁVEL)
+  // 🔥 GRÁFICOS
   // ===============================
-  let graficoFinanceiro = null;
+  let gGeral, gMes, gCategoria;
 
-  async function carregarGrafico(userId) {
-    const canvas = document.getElementById("graficoFinanceiro");
-    if (!canvas) return;
+  async function carregarGraficos(userId) {
+    const q = query(collection(db, "lancamentos"), where("usuarioId", "==", userId));
+    const snap = await getDocs(q);
 
-    setTimeout(async () => {
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    let entradas = 0, saidas = 0;
+    const porMes = {};
+    const porCategoria = {};
 
-      let entradas = 0;
-      let saidas = 0;
+    snap.forEach(d => {
+      const l = d.data();
 
-      const q = query(
-        collection(db, "lancamentos"),
-        where("usuarioId", "==", userId)
-      );
-
-      const snapshot = await getDocs(q);
-
-      snapshot.forEach((docSnap) => {
-        const l = docSnap.data();
-        if (l.tipo === "entrada") entradas += l.valor;
-        if (l.tipo === "saida") saidas += l.valor;
-      });
-
-      if (graficoFinanceiro) {
-        graficoFinanceiro.destroy();
+      if (l.tipo === "entrada") entradas += l.valor;
+      if (l.tipo === "saida") {
+        saidas += l.valor;
+        porCategoria[l.categoriaNome] =
+          (porCategoria[l.categoriaNome] || 0) + l.valor;
       }
 
-      graficoFinanceiro = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["Entradas", "Saídas"],
-          datasets: [{
-            label: "Valores (R$)",
-            data: [entradas, saidas]
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false
-        }
-      });
-    }, 100);
+      const mes = l.data.slice(0, 7);
+      porMes[mes] = (porMes[mes] || 0) + l.valor;
+    });
+
+    gGeral?.destroy();
+    gMes?.destroy();
+    gCategoria?.destroy();
+
+    gGeral = new Chart(graficoFinanceiro, {
+      type: "bar",
+      data: {
+        labels: ["Entradas", "Saídas"],
+        datasets: [{ data: [entradas, saidas] }]
+      }
+    });
+
+    gMes = new Chart(graficoMes, {
+      type: "line",
+      data: {
+        labels: Object.keys(porMes),
+        datasets: [{ label: "Movimentação", data: Object.values(porMes) }]
+      }
+    });
+
+    gCategoria = new Chart(graficoCategoria, {
+      type: "pie",
+      data: {
+        labels: Object.keys(porCategoria),
+        datasets: [{ data: Object.values(porCategoria) }]
+      }
+    });
   }
 
   // ===============================
   // EVENTOS
   // ===============================
-  selectTipo.addEventListener("change", () => {
-    carregarCategorias(selectTipo.value);
-  });
+  selectTipo.addEventListener("change", () => carregarCategorias(selectTipo.value));
 
   btnSalvar.addEventListener("click", async () => {
-    msgFinanceiro.style.color = "red";
+    msgFinanceiro.textContent = "";
 
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const tipo = selectTipo.value;
-    const categoriaId = selectCategoria.value;
-    const categoriaNome =
-      selectCategoria.options[selectCategoria.selectedIndex]?.text || "";
     const valor = parseFloat(inputValor.value);
-    const data = inputData.value;
-    const descricao = inputDescricao.value;
-
-    // ✅ VALIDAÇÃO REAL
-    if (!tipo || !categoriaId || !data || isNaN(valor) || valor <= 0) {
+    if (!selectCategoria.value || !inputData.value || isNaN(valor) || valor <= 0) {
       msgFinanceiro.textContent = "Preencha todos os campos corretamente.";
       return;
     }
 
+    const user = auth.currentUser;
+
     await addDoc(collection(db, "lancamentos"), {
-      tipo,
-      categoriaId,
-      categoriaNome,
+      tipo: selectTipo.value,
+      categoriaId: selectCategoria.value,
+      categoriaNome: selectCategoria.options[selectCategoria.selectedIndex].text,
       valor,
-      data,
-      descricao,
+      data: inputData.value,
+      descricao: inputDescricao.value,
       usuarioId: user.uid,
-      usuarioEmail: user.email,
       criadoEm: serverTimestamp()
     });
-
-    msgFinanceiro.style.color = "green";
-    msgFinanceiro.textContent = "Lançamento salvo com sucesso ✅";
 
     inputValor.value = "";
     inputData.value = "";
@@ -238,42 +211,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
     listarLancamentos(user.uid);
     calcularKPIs(user.uid);
-    carregarGrafico(user.uid);
+    carregarGraficos(user.uid);
   });
 
-  btnLogin.addEventListener("click", async () => {
-    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-  });
+  btnLogin.addEventListener("click", () =>
+    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
+  );
 
-  btnLogout.addEventListener("click", async () => {
-    await signOut(auth);
-  });
+  btnLogout.addEventListener("click", () => signOut(auth));
 
   // ===============================
   // AUTH
   // ===============================
-  onAuthStateChanged(auth, async (user) => {
+  onAuthStateChanged(auth, async user => {
     if (user) {
       loginSection.style.display = "none";
-      userSection.style.display = "block";
-      financeSection.style.display = "block";
+      userSection.style.display = financeSection.style.display = "block";
 
       userEmailEl.textContent = user.email;
 
       const snap = await getDoc(doc(db, "usuarios", user.uid));
-      userPerfilEl.textContent = snap.exists()
-        ? snap.data().perfil
-        : "perfil não encontrado";
+      userPerfilEl.textContent = snap.exists() ? snap.data().perfil : "-";
 
       carregarCategorias(selectTipo.value);
       listarLancamentos(user.uid);
       calcularKPIs(user.uid);
-      carregarGrafico(user.uid);
-
+      carregarGraficos(user.uid);
     } else {
       loginSection.style.display = "block";
-      userSection.style.display = "none";
-      financeSection.style.display = "none";
+      userSection.style.display = financeSection.style.display = "none";
     }
   });
 
