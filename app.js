@@ -14,7 +14,6 @@ import {
   addDoc,
   serverTimestamp,
   query,
-  orderBy,
   where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -24,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ELEMENTOS GERAIS
   // ===============================
   const statusEl = document.getElementById("status");
-
   const loginSection = document.getElementById("login-section");
   const userSection = document.getElementById("user-section");
   const financeSection = document.getElementById("finance-section");
@@ -37,7 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const userEmailEl = document.getElementById("userEmail");
   const userPerfilEl = document.getElementById("userPerfil");
-  const loginErrorEl = document.getElementById("loginError");
 
   // ===============================
   // ELEMENTOS FINANCEIROS
@@ -53,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const listaLancamentos = document.getElementById("listaLancamentos");
 
   // ===============================
-  // KPIs (ETAPA 6)
+  // KPIs
   // ===============================
   const kpiEntradas = document.getElementById("kpiEntradas");
   const kpiSaidas = document.getElementById("kpiSaidas");
@@ -61,64 +58,70 @@ document.addEventListener("DOMContentLoaded", () => {
   const kpiPercentual = document.getElementById("kpiPercentual");
 
   // ===============================
-  // FUNÇÃO: CARREGAR CATEGORIAS
+  // CARREGAR CATEGORIAS
   // ===============================
-  async function carregarCategorias(tipoSelecionado) {
+  async function carregarCategorias(tipo) {
     selectCategoria.innerHTML = "<option>Carregando...</option>";
 
     const snapshot = await getDocs(collection(db, "categorias"));
     selectCategoria.innerHTML = "";
 
     snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (data.tipo === tipoSelecionado) {
-        const option = document.createElement("option");
-        option.value = docSnap.id;
-        option.textContent = data.nome;
-        selectCategoria.appendChild(option);
+      const c = docSnap.data();
+      if (c.tipo === tipo) {
+        const opt = document.createElement("option");
+        opt.value = docSnap.id;
+        opt.textContent = c.nome;
+        selectCategoria.appendChild(opt);
       }
     });
   }
 
   // ===============================
-  // FUNÇÃO: LISTAR LANÇAMENTOS
+  // LISTAR LANÇAMENTOS (CORRIGIDO)
   // ===============================
   async function listarLancamentos(userId) {
     listaLancamentos.innerHTML =
       "<tr><td colspan='5'>Carregando...</td></tr>";
 
-    const q = query(
-      collection(db, "lancamentos"),
-      where("usuarioId", "==", userId),
-      orderBy("data", "desc")
-    );
+    try {
+      const q = query(
+        collection(db, "lancamentos"),
+        where("usuarioId", "==", userId)
+      );
 
-    const snapshot = await getDocs(q);
-    listaLancamentos.innerHTML = "";
+      const snapshot = await getDocs(q);
+      listaLancamentos.innerHTML = "";
 
-    if (snapshot.empty) {
+      if (snapshot.empty) {
+        listaLancamentos.innerHTML =
+          "<tr><td colspan='5'>Nenhum lançamento encontrado</td></tr>";
+        return;
+      }
+
+      snapshot.forEach((docSnap) => {
+        const l = docSnap.data();
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${l.data}</td>
+          <td>${l.tipo}</td>
+          <td>${l.categoriaNome || "-"}</td>
+          <td>R$ ${Number(l.valor).toFixed(2)}</td>
+          <td>${l.descricao || ""}</td>
+        `;
+        listaLancamentos.appendChild(tr);
+      });
+
+    } catch (error) {
+      console.error("Erro ao listar lançamentos:", error);
       listaLancamentos.innerHTML =
-        "<tr><td colspan='5'>Nenhum lançamento encontrado</td></tr>";
-      return;
+        "<tr><td colspan='5'>Erro ao carregar lançamentos</td></tr>";
     }
-
-    snapshot.forEach((docSnap) => {
-      const l = docSnap.data();
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${l.data}</td>
-        <td>${l.tipo}</td>
-        <td>${l.categoriaNome}</td>
-        <td>R$ ${Number(l.valor).toFixed(2)}</td>
-        <td>${l.descricao || ""}</td>
-      `;
-      listaLancamentos.appendChild(tr);
-    });
   }
 
   // ===============================
-  // FUNÇÃO: CALCULAR KPIs
+  // KPIs
   // ===============================
   async function calcularKPIs(userId) {
     let entradas = 0;
@@ -147,47 +150,27 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // EVENTO TIPO
+  // EVENTOS
   // ===============================
   selectTipo.addEventListener("change", () => {
     carregarCategorias(selectTipo.value);
   });
-  carregarCategorias(selectTipo.value);
 
-  // ===============================
-  // SALVAR LANÇAMENTO
-  // ===============================
   btnSalvar.addEventListener("click", async () => {
-    msgFinanceiro.style.color = "red";
-
-    const tipo = selectTipo.value;
-    const categoriaId = selectCategoria.value;
-    const categoriaNome = selectCategoria.options[selectCategoria.selectedIndex].text;
-    const valor = parseFloat(inputValor.value);
-    const data = inputData.value;
-    const descricao = inputDescricao.value;
-
-    if (!tipo || !categoriaId || !data || isNaN(valor)) {
-      msgFinanceiro.textContent = "Preencha todos os campos.";
-      return;
-    }
-
     const user = auth.currentUser;
+    if (!user) return;
 
     await addDoc(collection(db, "lancamentos"), {
-      tipo,
-      categoriaId,
-      categoriaNome,
-      valor,
-      data,
-      descricao,
+      tipo: selectTipo.value,
+      categoriaId: selectCategoria.value,
+      categoriaNome: selectCategoria.options[selectCategoria.selectedIndex].text,
+      valor: Number(inputValor.value),
+      data: inputData.value,
+      descricao: inputDescricao.value,
       usuarioId: user.uid,
       usuarioEmail: user.email,
       criadoEm: serverTimestamp()
     });
-
-    msgFinanceiro.style.color = "green";
-    msgFinanceiro.textContent = "Lançamento salvo ✅";
 
     inputValor.value = "";
     inputData.value = "";
@@ -197,15 +180,8 @@ document.addEventListener("DOMContentLoaded", () => {
     calcularKPIs(user.uid);
   });
 
-  // ===============================
-  // LOGIN / LOGOUT
-  // ===============================
   btnLogin.addEventListener("click", async () => {
-    await signInWithEmailAndPassword(
-      auth,
-      emailInput.value,
-      passwordInput.value
-    );
+    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
   });
 
   btnLogout.addEventListener("click", async () => {
@@ -213,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===============================
-  // CONTROLE DE ESTADO
+  // AUTH STATE
   // ===============================
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -228,6 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ? snap.data().perfil
         : "perfil não encontrado";
 
+      carregarCategorias(selectTipo.value);
       listarLancamentos(user.uid);
       calcularKPIs(user.uid);
 
@@ -240,5 +217,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   statusEl.textContent = "Conectado ao Firebase ✅";
   statusEl.style.color = "green";
-
 });
