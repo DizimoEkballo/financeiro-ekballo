@@ -6,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Favicon opcional (evita erro 404 no console) -->
+  <link rel="icon" href="data:,">
 </head>
 
 <body>
@@ -105,27 +108,6 @@
         <p id="msgFinanceiro"></p>
 
         <!-- ===============================
-             FILTROS E EXPORTAÇÃO (NOVO)
-        ================================ -->
-        <h3>Filtros</h3>
-
-        <label>Data inicial:</label>
-        <input type="date" id="filtroInicio">
-
-        <label>Data final:</label>
-        <input type="date" id="filtroFim">
-
-        <button id="btnFiltrar">Filtrar</button>
-        <button id="btnLimparFiltro">Limpar</button>
-
-        <br /><br />
-
-        <button id="btnExportarPDF">📄 Exportar PDF</button>
-        <button id="btnExportarExcel">📊 Exportar Excel</button>
-
-        <hr />
-
-        <!-- ===============================
              LISTA
         ================================ -->
         <h3>Lista de Lançamentos</h3>
@@ -138,12 +120,11 @@
               <th>Categoria</th>
               <th>Valor (R$)</th>
               <th>Descrição</th>
-              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="listaLancamentos">
             <tr>
-              <td colspan="6">Carregando...</td>
+              <td colspan="5">Carregando...</td>
             </tr>
           </tbody>
         </table>
@@ -162,7 +143,7 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- App -->
-  <script type="module" src="./app.js"></script>
+  <!-- APP (CAMINHO CORRIGIDO) -->
+  <script type="module" src="./js/app.js"></script>
 </body>
 </html>
