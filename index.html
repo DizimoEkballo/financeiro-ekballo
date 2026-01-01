@@ -16,61 +16,54 @@
   </header>
 
   <main>
-
     <!-- LOGIN -->
     <section id="login-section">
       <h2>Login</h2>
       <input type="email" id="email" placeholder="E-mail" /><br /><br />
       <input type="password" id="password" placeholder="Senha" /><br /><br />
       <button id="btnLogin">Entrar</button>
+      <p id="loginError" style="color:red;"></p>
     </section>
 
-    <!-- USUÁRIO -->
+    <!-- USUÁRIO LOGADO -->
     <section id="user-section" style="display:none;">
-      <section id="finance-section" style="display:none;">
+
+      <section id="finance-section" style="display:none; margin-top:20px;">
 
         <!-- KPIs -->
         <h2>Resumo Financeiro</h2>
         <div id="kpis" style="display:flex; gap:20px; flex-wrap:wrap;">
-          <div><h4>Entradas</h4><p id="kpiEntradas">R$ 0,00</p></div>
-          <div><h4>Saídas</h4><p id="kpiSaidas">R$ 0,00</p></div>
-          <div><h4>Saldo</h4><p id="kpiSaldo">R$ 0,00</p></div>
-          <div><h4>% Gastos</h4><p id="kpiPercentual">0%</p></div>
+          <div class="kpi"><h4>Entradas</h4><p id="kpiEntradas">R$ 0,00</p></div>
+          <div class="kpi"><h4>Saídas</h4><p id="kpiSaidas">R$ 0,00</p></div>
+          <div class="kpi"><h4>Saldo</h4><p id="kpiSaldo">R$ 0,00</p></div>
+          <div class="kpi"><h4>% Gastos</h4><p id="kpiPercentual">0%</p></div>
         </div>
 
         <!-- GRÁFICOS -->
-        <h2>Gráficos</h2>
-        <h3>📊 Por Mês</h3>
-        <canvas id="graficoMes"></canvas>
+        <h2>Gráficos Financeiros</h2>
 
-        <h3>🥧 Por Categoria</h3>
-        <canvas id="graficoCategoria"></canvas>
+        <h3>📊 Movimentação por Mês</h3>
+        <canvas id="graficoFinanceiro" height="120"></canvas>
 
-        <!-- FORM -->
+        <h3>🥧 Gastos por Categoria</h3>
+        <canvas id="graficoCategoria" height="120"></canvas>
+
+        <!-- FORMULÁRIO -->
         <h2>Novo Lançamento</h2>
+
         <select id="tipo">
           <option value="entrada">Entrada</option>
           <option value="saida">Saída</option>
-        </select><br><br>
+        </select><br /><br />
 
-        <select id="categoria"></select><br><br>
-        <input type="number" id="valor" placeholder="Valor"><br><br>
-        <input type="date" id="data"><br><br>
-        <input type="text" id="descricao" placeholder="Descrição"><br><br>
+        <select id="categoria"></select><br /><br />
 
-        <button id="btnSalvar">Salvar Lançamento</button>
+        <input type="number" id="valor" placeholder="Valor" /><br /><br />
+        <input type="date" id="data" /><br /><br />
+        <input type="text" id="descricao" placeholder="Descrição" /><br /><br />
+
+        <button id="btnSalvar">Salvar</button>
         <p id="msgFinanceiro"></p>
-
-        <!-- FILTROS -->
-        <h3>📅 Filtro</h3>
-        <input type="date" id="filtroInicio">
-        <input type="date" id="filtroFim">
-        <button id="btnFiltrar">Filtrar</button>
-        <button id="btnLimparFiltro">Limpar</button>
-
-        <br><br>
-        <button id="btnExportarExcel">📄 Exportar Excel</button>
-        <button id="btnExportarPDF">📄 Exportar PDF</button>
 
         <!-- LISTA -->
         <h3>Lançamentos</h3>
@@ -81,7 +74,6 @@
               <th>Tipo</th>
               <th>Categoria</th>
               <th>Valor</th>
-              <th>Descrição</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -89,13 +81,14 @@
         </table>
       </section>
 
-      <p>Usuário: <strong id="userEmail"></strong></p>
       <button id="btnLogout">Sair</button>
     </section>
-
   </main>
 
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script type="module" src="./js/app.js"></script>
+
+  <!-- APP (CORRETO PARA SEU GITHUB) -->
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
