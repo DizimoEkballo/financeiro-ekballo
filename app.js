@@ -12,30 +12,23 @@ import {
   collection,
   getDocs,
   addDoc,
+  updateDoc,
+  deleteDoc,
   serverTimestamp,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+let graficoMes = null;
+let graficoCategoria = null;
+let lancamentoEditandoId = null;
+let lancamentosCache = [];
 
 document.addEventListener("DOMContentLoaded", () => {
 
   // ===============================
   // ELEMENTOS
   // ===============================
-  const statusEl = document.getElementById("status");
-  const loginSection = document.getElementById("login-section");
-  const userSection = document.getElementById("user-section");
-  const financeSection = document.getElementById("finance-section");
-
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-
-  const btnLogin = document.getElementById("btnLogin");
-  const btnLogout = document.getElementById("btnLogout");
-
-  const userEmailEl = document.getElementById("userEmail");
-  const userPerfilEl = document.getElementById("userPerfil");
-
   const selectTipo = document.getElementById("tipo");
   const selectCategoria = document.getElementById("categoria");
   const inputValor = document.getElementById("valor");
@@ -43,133 +36,197 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputDescricao = document.getElementById("descricao");
   const btnSalvar = document.getElementById("btnSalvar");
   const msgFinanceiro = document.getElementById("msgFinanceiro");
-
   const listaLancamentos = document.getElementById("listaLancamentos");
 
-  const kpiEntradas = document.getElementById("kpiEntradas");
-  const kpiSaidas = document.getElementById("kpiSaidas");
-  const kpiSaldo = document.getElementById("kpiSaldo");
-  const kpiPercentual = document.getElementById("kpiPercentual");
+  const filtroInicio = document.getElementById("filtroInicio");
+  const filtroFim = document.getElementById("filtroFim");
+  const btnFiltrar = document.getElementById("btnFiltrar");
+  const btnLimparFiltro = document.getElementById("btnLimparFiltro");
+
+  const btnExportarPDF = document.getElementById("btnExportarPDF");
+  const btnExportarExcel = document.getElementById("btnExportarExcel");
 
   // ===============================
   // CATEGORIAS
   // ===============================
   async function carregarCategorias(tipo) {
-    selectCategoria.innerHTML = "<option value=''>Selecione</option>";
-    const snap = await getDocs(collection(db, "categorias"));
-    snap.forEach(d => {
-      const c = d.data();
+    selectCategoria.innerHTML = "";
+    const snapshot = await getDocs(collection(db, "categorias"));
+    snapshot.forEach(docSnap => {
+      const c = docSnap.data();
       if (c.tipo === tipo) {
         const opt = document.createElement("option");
-        opt.value = d.id;
+        opt.value = docSnap.id;
         opt.textContent = c.nome;
         selectCategoria.appendChild(opt);
       }
     });
   }
 
-  // ===============================
-  // LISTA
-  // ===============================
-  async function listarLancamentos(userId) {
-    listaLancamentos.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
+  selectTipo.addEventListener("change", () => {
+    carregarCategorias(selectTipo.value);
+  });
 
+  // ===============================
+  // LISTAR + CACHE
+  // ===============================
+  function renderizarLista(lista) {
+    listaLancamentos.innerHTML = "";
+
+    if (lista.length === 0) {
+      listaLancamentos.innerHTML =
+        "<tr><td colspan='6'>Nenhum lançamento encontrado</td></tr>";
+      return;
+    }
+
+    lista.forEach(l => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${l.data}</td>
+        <td>${l.tipo}</td>
+        <td>${l.categoriaNome}</td>
+        <td>R$ ${l.valor.toFixed(2)}</td>
+        <td>${l.descricao || ""}</td>
+        <td>
+          <button onclick="editarLancamento('${l.id}')">✏️</button>
+          <button onclick="excluirLancamento('${l.id}')">🗑️</button>
+        </td>
+      `;
+      listaLancamentos.appendChild(tr);
+    });
+  }
+
+  async function carregarLancamentos(userId) {
     const q = query(
       collection(db, "lancamentos"),
       where("usuarioId", "==", userId)
     );
 
-    const snap = await getDocs(q);
-    listaLancamentos.innerHTML = "";
+    const snapshot = await getDocs(q);
+    lancamentosCache = [];
 
-    if (snap.empty) {
-      listaLancamentos.innerHTML =
-        "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
+    snapshot.forEach(docSnap => {
+      lancamentosCache.push({
+        id: docSnap.id,
+        ...docSnap.data()
+      });
+    });
+
+    aplicarFiltro();
+  }
+
+  // ===============================
+  // FILTRO
+  // ===============================
+  function aplicarFiltro() {
+    let lista = [...lancamentosCache];
+
+    if (filtroInicio.value) {
+      lista = lista.filter(l => l.data >= filtroInicio.value);
+    }
+
+    if (filtroFim.value) {
+      lista = lista.filter(l => l.data <= filtroFim.value);
+    }
+
+    renderizarLista(lista);
+    atualizarKPIs(lista);
+    atualizarGraficos(lista);
+  }
+
+  btnFiltrar.onclick = aplicarFiltro;
+  btnLimparFiltro.onclick = () => {
+    filtroInicio.value = "";
+    filtroFim.value = "";
+    aplicarFiltro();
+  };
+
+  // ===============================
+  // SALVAR / EDITAR
+  // ===============================
+  btnSalvar.onclick = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    if (!inputValor.value || !inputData.value) {
+      msgFinanceiro.textContent = "Preencha os campos obrigatórios";
+      msgFinanceiro.style.color = "red";
       return;
     }
 
-    snap.forEach(d => {
-      const l = d.data();
-      listaLancamentos.innerHTML += `
-        <tr>
-          <td>${l.data}</td>
-          <td>${l.tipo}</td>
-          <td>${l.categoriaNome}</td>
-          <td>R$ ${l.valor.toFixed(2)}</td>
-          <td>${l.descricao || ""}</td>
-        </tr>`;
-    });
-  }
+    const dados = {
+      tipo: selectTipo.value,
+      categoriaId: selectCategoria.value,
+      categoriaNome: selectCategoria.options[selectCategoria.selectedIndex].text,
+      valor: Number(inputValor.value),
+      data: inputData.value,
+      descricao: inputDescricao.value,
+      usuarioId: user.uid,
+      usuarioEmail: user.email
+    };
+
+    if (lancamentoEditandoId) {
+      await updateDoc(doc(db, "lancamentos", lancamentoEditandoId), dados);
+      lancamentoEditandoId = null;
+      btnSalvar.textContent = "Salvar Lançamento";
+    } else {
+      await addDoc(collection(db, "lancamentos"), {
+        ...dados,
+        criadoEm: serverTimestamp()
+      });
+    }
+
+    inputValor.value = "";
+    inputData.value = "";
+    inputDescricao.value = "";
+
+    carregarLancamentos(user.uid);
+  };
 
   // ===============================
   // KPIs
   // ===============================
-  async function calcularKPIs(userId) {
-    let entradas = 0, saidas = 0;
+  function atualizarKPIs(lista) {
+    let entradas = 0;
+    let saidas = 0;
 
-    const q = query(collection(db, "lancamentos"), where("usuarioId", "==", userId));
-    const snap = await getDocs(q);
-
-    snap.forEach(d => {
-      const l = d.data();
-      l.tipo === "entrada" ? entradas += l.valor : saidas += l.valor;
+    lista.forEach(l => {
+      if (l.tipo === "entrada") entradas += l.valor;
+      if (l.tipo === "saida") saidas += l.valor;
     });
 
-    kpiEntradas.textContent = `R$ ${entradas.toFixed(2)}`;
-    kpiSaidas.textContent = `R$ ${saidas.toFixed(2)}`;
-    kpiSaldo.textContent = `R$ ${(entradas - saidas).toFixed(2)}`;
-    kpiPercentual.textContent =
+    document.getElementById("kpiEntradas").textContent = `R$ ${entradas.toFixed(2)}`;
+    document.getElementById("kpiSaidas").textContent = `R$ ${saidas.toFixed(2)}`;
+    document.getElementById("kpiSaldo").textContent = `R$ ${(entradas - saidas).toFixed(2)}`;
+    document.getElementById("kpiPercentual").textContent =
       entradas ? `${((saidas / entradas) * 100).toFixed(1)}%` : "0%";
   }
 
   // ===============================
-  // 🔥 GRÁFICOS
+  // GRÁFICOS
   // ===============================
-  let gGeral, gMes, gCategoria;
-
-  async function carregarGraficos(userId) {
-    const q = query(collection(db, "lancamentos"), where("usuarioId", "==", userId));
-    const snap = await getDocs(q);
-
-    let entradas = 0, saidas = 0;
+  function atualizarGraficos(lista) {
     const porMes = {};
     const porCategoria = {};
 
-    snap.forEach(d => {
-      const l = d.data();
-
-      if (l.tipo === "entrada") entradas += l.valor;
-      if (l.tipo === "saida") {
-        saidas += l.valor;
-        porCategoria[l.categoriaNome] =
-          (porCategoria[l.categoriaNome] || 0) + l.valor;
-      }
-
+    lista.forEach(l => {
       const mes = l.data.slice(0, 7);
       porMes[mes] = (porMes[mes] || 0) + l.valor;
+      porCategoria[l.categoriaNome] = (porCategoria[l.categoriaNome] || 0) + l.valor;
     });
 
-    gGeral?.destroy();
-    gMes?.destroy();
-    gCategoria?.destroy();
+    if (graficoMes) graficoMes.destroy();
+    if (graficoCategoria) graficoCategoria.destroy();
 
-    gGeral = new Chart(graficoFinanceiro, {
+    graficoMes = new Chart(document.getElementById("graficoFinanceiro"), {
       type: "bar",
       data: {
-        labels: ["Entradas", "Saídas"],
-        datasets: [{ data: [entradas, saidas] }]
-      }
-    });
-
-    gMes = new Chart(graficoMes, {
-      type: "line",
-      data: {
         labels: Object.keys(porMes),
-        datasets: [{ label: "Movimentação", data: Object.values(porMes) }]
+        datasets: [{ label: "Valor por mês", data: Object.values(porMes) }]
       }
     });
 
-    gCategoria = new Chart(graficoCategoria, {
+    graficoCategoria = new Chart(document.getElementById("graficoCategoria"), {
       type: "pie",
       data: {
         labels: Object.keys(porCategoria),
@@ -179,70 +236,59 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===============================
-  // EVENTOS
+  // EXPORTAÇÃO
   // ===============================
-  selectTipo.addEventListener("change", () => carregarCategorias(selectTipo.value));
-
-  btnSalvar.addEventListener("click", async () => {
-    msgFinanceiro.textContent = "";
-
-    const valor = parseFloat(inputValor.value);
-    if (!selectCategoria.value || !inputData.value || isNaN(valor) || valor <= 0) {
-      msgFinanceiro.textContent = "Preencha todos os campos corretamente.";
-      return;
-    }
-
-    const user = auth.currentUser;
-
-    await addDoc(collection(db, "lancamentos"), {
-      tipo: selectTipo.value,
-      categoriaId: selectCategoria.value,
-      categoriaNome: selectCategoria.options[selectCategoria.selectedIndex].text,
-      valor,
-      data: inputData.value,
-      descricao: inputDescricao.value,
-      usuarioId: user.uid,
-      criadoEm: serverTimestamp()
+  btnExportarExcel.onclick = () => {
+    let csv = "Data,Tipo,Categoria,Valor,Descrição\n";
+    lancamentosCache.forEach(l => {
+      csv += `${l.data},${l.tipo},${l.categoriaNome},${l.valor},${l.descricao || ""}\n`;
     });
 
-    inputValor.value = "";
-    inputData.value = "";
-    inputDescricao.value = "";
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "lancamentos.csv";
+    a.click();
+  };
 
-    listarLancamentos(user.uid);
-    calcularKPIs(user.uid);
-    carregarGraficos(user.uid);
-  });
-
-  btnLogin.addEventListener("click", () =>
-    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-  );
-
-  btnLogout.addEventListener("click", () => signOut(auth));
+  btnExportarPDF.onclick = () => {
+    window.print();
+  };
 
   // ===============================
   // AUTH
   // ===============================
-  onAuthStateChanged(auth, async user => {
+  onAuthStateChanged(auth, user => {
     if (user) {
-      loginSection.style.display = "none";
-      userSection.style.display = financeSection.style.display = "block";
-
-      userEmailEl.textContent = user.email;
-
-      const snap = await getDoc(doc(db, "usuarios", user.uid));
-      userPerfilEl.textContent = snap.exists() ? snap.data().perfil : "-";
-
       carregarCategorias(selectTipo.value);
-      listarLancamentos(user.uid);
-      calcularKPIs(user.uid);
-      carregarGraficos(user.uid);
-    } else {
-      loginSection.style.display = "block";
-      userSection.style.display = financeSection.style.display = "none";
+      carregarLancamentos(user.uid);
     }
   });
 
-  statusEl.textContent = "Conectado ao Firebase ✅";
-  statusEl.style.color = "green";
 });
+
+// ===============================
+// FUNÇÕES GLOBAIS
+// ===============================
+window.excluirLancamento = async (id) => {
+  if (!confirm("Deseja excluir este lançamento?")) return;
+  await deleteDoc(doc(db, "lancamentos", id));
+  location.reload();
+};
+
+window.editarLancamento = (id) => {
+  const l = lancamentosCache.find(x => x.id === id);
+  if (!l) return;
+
+  selectTipo.value = l.tipo;
+  carregarCategorias(l.tipo).then(() => {
+    selectCategoria.value = l.categoriaId;
+  });
+
+  inputValor.value = l.valor;
+  inputData.value = l.data;
+  inputDescricao.value = l.descricao;
+
+  lancamentoEditandoId = id;
+  btnSalvar.textContent = "Atualizar Lançamento";
+};
