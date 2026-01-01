@@ -1,4 +1,5 @@
 import { auth, db } from "./firebase.js";
+
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -6,6 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
+  doc,
   collection,
   getDocs,
   addDoc,
@@ -16,14 +18,22 @@ import {
   where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let lancamentos = [];
-let graficoMes, graficoCategoria;
+let graficoMes = null;
+let graficoCategoria = null;
+let lancamentosCache = [];
 let editandoId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
 
   const $ = id => document.getElementById(id);
 
+  // LOGIN
+  $("btnLogin").onclick = () =>
+    signInWithEmailAndPassword(auth, $("email").value, $("password").value);
+
+  $("btnLogout").onclick = () => signOut(auth);
+
+  // CATEGORIAS
   async function carregarCategorias(tipo) {
     $("categoria").innerHTML = "";
     const snap = await getDocs(collection(db, "categorias"));
@@ -37,9 +47,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function render(lista) {
+  $("tipo").onchange = () => carregarCategorias($("tipo").value);
+
+  // CARREGAR LANÇAMENTOS
+  async function carregarLancamentos(uid) {
+    const q = query(collection(db, "lancamentos"), where("usuarioId", "==", uid));
+    const snap = await getDocs(q);
+
+    lancamentosCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderizar();
+  }
+
+  function renderizar() {
     $("listaLancamentos").innerHTML = "";
-    lista.forEach(l => {
+    lancamentosCache.forEach(l => {
       $("listaLancamentos").innerHTML += `
         <tr>
           <td>${l.data}</td>
@@ -51,24 +72,25 @@ document.addEventListener("DOMContentLoaded", () => {
             <button onclick="editar('${l.id}')">✏️</button>
             <button onclick="excluir('${l.id}')">🗑️</button>
           </td>
-        </tr>`;
+        </tr>
+      `;
     });
-    atualizarKPIs(lista);
-    atualizarGraficos(lista);
+    atualizarKPIs();
+    atualizarGraficos();
   }
 
-  function atualizarKPIs(lista) {
+  function atualizarKPIs() {
     let e = 0, s = 0;
-    lista.forEach(l => l.tipo === "entrada" ? e += l.valor : s += l.valor);
+    lancamentosCache.forEach(l => l.tipo === "entrada" ? e += l.valor : s += l.valor);
     $("kpiEntradas").textContent = `R$ ${e.toFixed(2)}`;
     $("kpiSaidas").textContent = `R$ ${s.toFixed(2)}`;
     $("kpiSaldo").textContent = `R$ ${(e - s).toFixed(2)}`;
     $("kpiPercentual").textContent = e ? `${((s / e) * 100).toFixed(1)}%` : "0%";
   }
 
-  function atualizarGraficos(lista) {
+  function atualizarGraficos() {
     const porMes = {}, porCat = {};
-    lista.forEach(l => {
+    lancamentosCache.forEach(l => {
       const mes = l.data.slice(0, 7);
       porMes[mes] = (porMes[mes] || 0) + l.valor;
       porCat[l.categoriaNome] = (porCat[l.categoriaNome] || 0) + l.valor;
@@ -89,8 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   $("btnSalvar").onclick = async () => {
-    const user = auth.currentUser;
-    if (!user || !$("valor").value || !$("data").value) return;
+    if (!$("valor").value || !$("data").value) return;
 
     const dados = {
       tipo: $("tipo").value,
@@ -99,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
       valor: Number($("valor").value),
       data: $("data").value,
       descricao: $("descricao").value,
-      usuarioId: user.uid,
+      usuarioId: auth.currentUser.uid,
       criadoEm: serverTimestamp()
     };
 
@@ -108,35 +129,24 @@ document.addEventListener("DOMContentLoaded", () => {
       : await addDoc(collection(db, "lancamentos"), dados);
 
     editandoId = null;
-    carregar();
+    carregarLancamentos(auth.currentUser.uid);
   };
 
-  async function carregar() {
-    const q = query(collection(db, "lancamentos"), where("usuarioId", "==", auth.currentUser.uid));
-    const snap = await getDocs(q);
-    lancamentos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    render(lancamentos);
-  }
-
-  onAuthStateChanged(auth, u => {
-    if (u) {
+  onAuthStateChanged(auth, user => {
+    if (user) {
       $("login-section").style.display = "none";
       $("user-section").style.display = "block";
       $("finance-section").style.display = "block";
-      $("userEmail").textContent = u.email;
+      $("userEmail").textContent = user.email;
+
       carregarCategorias($("tipo").value);
-      carregar();
+      carregarLancamentos(user.uid);
     }
   });
 
-  $("btnLogin").onclick = () =>
-    signInWithEmailAndPassword(auth, $("email").value, $("password").value);
-
-  $("btnLogout").onclick = () => signOut(auth);
+  window.editar = id => editandoId = id;
+  window.excluir = async id => {
+    await deleteDoc(doc(db, "lancamentos", id));
+    carregarLancamentos(auth.currentUser.uid);
+  };
 });
-
-window.editar = id => editandoId = id;
-window.excluir = async id => {
-  await deleteDoc(doc(db, "lancamentos", id));
-  location.reload();
-};
