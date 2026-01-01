@@ -5,10 +5,7 @@
   <title>Controle Financeiro | Igreja</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- CSS -->
   <link rel="stylesheet" href="./style.css" />
-
-  <!-- Favicon opcional (evita erro 404 no console) -->
   <link rel="icon" href="data:,">
 </head>
 
@@ -19,131 +16,86 @@
   </header>
 
   <main>
-    <!-- VISITANTE -->
+
+    <!-- LOGIN -->
     <section id="login-section">
       <h2>Login</h2>
-
-      <input type="email" id="email" placeholder="E-mail" />
-      <br /><br />
-      <input type="password" id="password" placeholder="Senha" />
-      <br /><br />
-
+      <input type="email" id="email" placeholder="E-mail" /><br /><br />
+      <input type="password" id="password" placeholder="Senha" /><br /><br />
       <button id="btnLogin">Entrar</button>
-      <p id="loginError" style="color:red;"></p>
     </section>
 
-    <!-- USUÁRIO LOGADO -->
+    <!-- USUÁRIO -->
     <section id="user-section" style="display:none;">
+      <section id="finance-section" style="display:none;">
 
-      <!-- ÁREA FINANCEIRA -->
-      <section id="finance-section" style="display:none; margin-top: 20px;">
-
-        <!-- ===============================
-             KPIs
-        ================================ -->
+        <!-- KPIs -->
         <h2>Resumo Financeiro</h2>
-
-        <div id="kpis" style="display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
-          <div class="kpi">
-            <h4>Total de Entradas</h4>
-            <p id="kpiEntradas">R$ 0,00</p>
-          </div>
-
-          <div class="kpi">
-            <h4>Total de Saídas</h4>
-            <p id="kpiSaidas">R$ 0,00</p>
-          </div>
-
-          <div class="kpi">
-            <h4>Saldo Geral</h4>
-            <p id="kpiSaldo">R$ 0,00</p>
-          </div>
-
-          <div class="kpi">
-            <h4>% de Gastos</h4>
-            <p id="kpiPercentual">0%</p>
-          </div>
+        <div id="kpis" style="display:flex; gap:20px; flex-wrap:wrap;">
+          <div><h4>Entradas</h4><p id="kpiEntradas">R$ 0,00</p></div>
+          <div><h4>Saídas</h4><p id="kpiSaidas">R$ 0,00</p></div>
+          <div><h4>Saldo</h4><p id="kpiSaldo">R$ 0,00</p></div>
+          <div><h4>% Gastos</h4><p id="kpiPercentual">0%</p></div>
         </div>
 
-        <!-- ===============================
-             GRÁFICOS
-        ================================ -->
-        <h2>Gráficos Financeiros</h2>
+        <!-- GRÁFICOS -->
+        <h2>Gráficos</h2>
+        <h3>📊 Por Mês</h3>
+        <canvas id="graficoMes"></canvas>
 
-        <h3>Entradas x Saídas</h3>
-        <canvas id="graficoFinanceiro" height="120"></canvas>
+        <h3>🥧 Por Categoria</h3>
+        <canvas id="graficoCategoria"></canvas>
 
-        <h3>📊 Movimentação por Mês</h3>
-        <canvas id="graficoMes" height="120"></canvas>
-
-        <h3>🥧 Gastos por Categoria</h3>
-        <canvas id="graficoCategoria" height="120"></canvas>
-
-        <!-- ===============================
-             FORMULÁRIO
-        ================================ -->
-        <h2>Novo Lançamento Financeiro</h2>
-
-        <label>Tipo</label><br />
+        <!-- FORM -->
+        <h2>Novo Lançamento</h2>
         <select id="tipo">
           <option value="entrada">Entrada</option>
           <option value="saida">Saída</option>
-        </select><br /><br />
+        </select><br><br>
 
-        <label>Categoria</label><br />
-        <select id="categoria">
-          <option value="">Carregando categorias...</option>
-        </select><br /><br />
+        <select id="categoria"></select><br><br>
+        <input type="number" id="valor" placeholder="Valor"><br><br>
+        <input type="date" id="data"><br><br>
+        <input type="text" id="descricao" placeholder="Descrição"><br><br>
 
-        <label>Valor (R$)</label><br />
-        <input type="number" id="valor" step="0.01" /><br /><br />
-
-        <label>Data</label><br />
-        <input type="date" id="data" /><br /><br />
-
-        <label>Descrição</label><br />
-        <input type="text" id="descricao" /><br /><br />
-
-        <button id="btnSalvar" type="button">Salvar Lançamento</button>
+        <button id="btnSalvar">Salvar Lançamento</button>
         <p id="msgFinanceiro"></p>
 
-        <!-- ===============================
-             LISTA
-        ================================ -->
-        <h3>Lista de Lançamentos</h3>
+        <!-- FILTROS -->
+        <h3>📅 Filtro</h3>
+        <input type="date" id="filtroInicio">
+        <input type="date" id="filtroFim">
+        <button id="btnFiltrar">Filtrar</button>
+        <button id="btnLimparFiltro">Limpar</button>
 
+        <br><br>
+        <button id="btnExportarExcel">📄 Exportar Excel</button>
+        <button id="btnExportarPDF">📄 Exportar PDF</button>
+
+        <!-- LISTA -->
+        <h3>Lançamentos</h3>
         <table border="1" width="100%">
           <thead>
             <tr>
               <th>Data</th>
               <th>Tipo</th>
               <th>Categoria</th>
-              <th>Valor (R$)</th>
+              <th>Valor</th>
               <th>Descrição</th>
+              <th>Ações</th>
             </tr>
           </thead>
-          <tbody id="listaLancamentos">
-            <tr>
-              <td colspan="5">Carregando...</td>
-            </tr>
-          </tbody>
+          <tbody id="listaLancamentos"></tbody>
         </table>
-
       </section>
 
-      <p>
-        Usuário logado: <strong id="userEmail"></strong><br />
-        Perfil: <strong id="userPerfil"></strong>
-      </p>
-
+      <p>Usuário: <strong id="userEmail"></strong></p>
       <button id="btnLogout">Sair</button>
     </section>
+
   </main>
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- APP (CAMINHO CORRIGIDO) -->
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
