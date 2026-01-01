@@ -36,12 +36,11 @@
       <section id="finance-section" style="display:none; margin-top: 20px;">
 
         <!-- ===============================
-             ETAPA 6.1 — KPIs
+             KPIs
         ================================ -->
         <h2>Resumo Financeiro</h2>
 
         <div id="kpis" style="display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
-
           <div class="kpi">
             <h4>Total de Entradas</h4>
             <p id="kpiEntradas">R$ 0,00</p>
@@ -61,17 +60,12 @@
             <h4>% de Gastos</h4>
             <p id="kpiPercentual">0%</p>
           </div>
-
         </div>
 
         <!-- ===============================
-             ETAPA 6.4 — GRÁFICOS
+             GRÁFICOS
         ================================ -->
         <h2>Gráficos Financeiros</h2>
-
-        <canvas id="graficoEntradasSaidas" height="120"></canvas>
-        <br /><br />
-        <canvas id="graficoSaldo" height="120"></canvas>
 
         <h3>Entradas x Saídas</h3>
         <canvas id="graficoFinanceiro" height="120"></canvas>
@@ -81,7 +75,6 @@
 
         <h3>🥧 Gastos por Categoria</h3>
         <canvas id="graficoCategoria" height="120"></canvas>
-
 
         <!-- ===============================
              FORMULÁRIO
@@ -112,6 +105,27 @@
         <p id="msgFinanceiro"></p>
 
         <!-- ===============================
+             FILTROS E EXPORTAÇÃO (NOVO)
+        ================================ -->
+        <h3>Filtros</h3>
+
+        <label>Data inicial:</label>
+        <input type="date" id="filtroInicio">
+
+        <label>Data final:</label>
+        <input type="date" id="filtroFim">
+
+        <button id="btnFiltrar">Filtrar</button>
+        <button id="btnLimparFiltro">Limpar</button>
+
+        <br /><br />
+
+        <button id="btnExportarPDF">📄 Exportar PDF</button>
+        <button id="btnExportarExcel">📊 Exportar Excel</button>
+
+        <hr />
+
+        <!-- ===============================
              LISTA
         ================================ -->
         <h3>Lista de Lançamentos</h3>
@@ -124,11 +138,12 @@
               <th>Categoria</th>
               <th>Valor (R$)</th>
               <th>Descrição</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="listaLancamentos">
             <tr>
-              <td colspan="5">Carregando...</td>
+              <td colspan="6">Carregando...</td>
             </tr>
           </tbody>
         </table>
@@ -151,4 +166,3 @@
   <script type="module" src="./app.js"></script>
 </body>
 </html>
-
